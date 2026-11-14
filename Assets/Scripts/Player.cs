@@ -1,8 +1,11 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Player : MonoBehaviour
 {
     public float speed = 5.0f;
+
+    private bool hasLost;
 
     private void Start()
     {
@@ -11,6 +14,11 @@ public class Player : MonoBehaviour
 
     private void Update()
     {
+        if (hasLost)
+        {
+            return;
+        }
+
         if (Input.GetKey(KeyCode.UpArrow))
         {
             transform.Translate(0f, speed * Time.deltaTime, 0f);
@@ -38,6 +46,11 @@ public class Player : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
+        if (hasLost)
+        {
+            return;
+        }
+
         if (collision.gameObject.CompareTag("Walls"))
         {
             if (Input.GetKey(KeyCode.UpArrow))
@@ -64,9 +77,23 @@ public class Player : MonoBehaviour
             Debug.Log("Player is moving down.");
         }
         }
+        else if (collision.gameObject.CompareTag("Keys"))
+        {
+            Debug.Log("Player has collected a key.");
+            Destroy(collision.gameObject);
+        }
         else if (collision.gameObject.CompareTag("Enemy"))
         {
-            Debug.Log("Player has collided with an enemy.");
+            hasLost = true;
+            Debug.Log("Game Over! The player collided with an enemy.");
+
+            Rigidbody2D playerBody = GetComponent<Rigidbody2D>();
+            if (playerBody != null)
+            {
+                playerBody.linearVelocity = Vector2.zero;
+            }
+
+            Invoke(nameof(RestartLevel), 1.5f);
         }
         else
         {
@@ -74,5 +101,10 @@ public class Player : MonoBehaviour
         }
 
         Debug.Log("Player has collided with " + collision.gameObject.name);
+    }
+
+    private void RestartLevel()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }
